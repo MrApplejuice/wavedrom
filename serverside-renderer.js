@@ -61,7 +61,7 @@ for (var i = 1; i < system.args.length; i++) {
     }
   } else if (startsWith(arg, "--format=")) {
     var v = arg.slice("--format=".length).toLowerCase();
-    if (format != "svg" && format != "png") {
+    if (v != "svg" && v != "png") {
       console.log("Invalid format: " + v);
       phantom.exit(10);
     }
@@ -74,7 +74,6 @@ for (var i = 1; i < system.args.length; i++) {
 if (outputFile === null) {
   console.log("Output filename expected!");
   phantom.exit(10);
-  console.log("this is needed somehow, otherwise phantomjs does not quit?!");
 }
 
 var graphStr = "";
@@ -143,4 +142,4 @@ if (format == "svg") {
   page.render(outputFile, {format: "png"});
 }
 
-phantom.exit();
+phantom.exit(0);
