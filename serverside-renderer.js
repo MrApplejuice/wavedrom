@@ -1,5 +1,5 @@
 var webPage = require('webpage');
-var page = webPage.create();
+
 var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" +
 "{ signal: [" +
 "  { name: 'A', wave: '01........0....',  node: '.a........j' }," +
@@ -15,45 +15,53 @@ var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" +
 "}" +
 "</script></body></html>";
 
-page.setContent(content, 'empty');
+function renderNewPage(content, size) {
+  var page = webPage.create();
+  if (typeof size !== "undefined") {
+    page.viewportSize = {width: size.width, height: size.height};
+  }
+  
+  page.setContent(content, 'empty');
 
-var succeeded = page.injectJs("./skins/default.js");
-if (!succeeded) {
-  console.log("failed to load ./skins/default.js");
-  phantom.exit(1);
+  var succeeded = page.injectJs("./skins/default.js");
+  if (!succeeded) {
+    console.log("failed to load ./skins/default.js");
+    phantom.exit(1);
+  }
+  
+  var succeeded = page.injectJs("./wavedrom.min.js");
+  if (!succeeded) {
+    console.log("failed to load wavedrom.js");
+    phantom.exit(1);
+  }
+
+  page.evaluate(function() {
+    WaveDrom.ProcessAll();
+  });
+
+  return page;
 }
 
-var succeeded = page.injectJs("./wavedrom.min.js");
-if (!succeeded) {
-  console.log("failed to load wavedrom.js");
-  phantom.exit(1);
-}
+var page = renderNewPage(content);
 
 var node = page.evaluate(function() {
-  WaveDrom.ProcessAll();
-  
   var body = document.getElementById('thebody');
   
   var div = body.children[0];
   var svg = div.children[0];
 
+  var svgRect = document.querySelector("div > svg").getBoundingClientRect();
+
   var node = {};
-  node.name = svg.nodeName;
-  node.width = svg.offsetWidth;
-  node.height = svg.offsetHeight;
+  node.width = svgRect.left + svgRect.right;
+  node.height = svgRect.top + svgRect.bottom;
   
   return node;
 });
 
-console.log(node.name);
 console.log(node.width);
 console.log(node.height);
 
-var updatedContent = page.content;
-page.viewportSize = {width: node.width, height: node.height};
-page.setContent(updatedContent, 'empty');
-console.log(updatedContent);
-
-page.render("test.png", {format: "png", width: node.width, height: node.height});
-
+var page = renderNewPage(content, {width: node.width, height: node.height});
+page.render("test.png", {format: "png"});
 phantom.exit();
