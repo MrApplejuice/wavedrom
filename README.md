@@ -101,6 +101,11 @@ is online real-time editor of digital timing diagrams based on **WaveDrom** engi
 2. unzip
 3. run
 
+## Server-side WaveDrom renderer
+
+The directory `server` contains a script file that runs as a console application when
+executed with phantomjs. Allows one to render the wavedrom-scripts to a SVG or PNG file.
+
 ## Community
 
 Please use [WaveDrom user group](http://groups.google.com/group/wavedrom) for discussions, questions, ideas, whatever.
