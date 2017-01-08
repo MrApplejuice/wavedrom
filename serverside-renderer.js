@@ -4,6 +4,7 @@ var webPage = require('webpage');
 var fs = require('fs');
 var system = require('system');
 
+var outputFile = null;
 var format = "svg";
 var scale = 1.0;
 
@@ -20,14 +21,25 @@ function startsWith(str, start) {
   return true;
 }
 
+var parseMoreArgs = true;
 for (var i = 1; i < system.args.length; i++) {
   var arg = system.args[i];
-  if (arg == "-" || arg == "--help") {
+  
+  if (!parseMoreArgs || !startsWith(arg, "-")) {
+    if (outputFile !== null) {
+      console.log("Only a single output filename is allowed");
+      phantom.exit(10);
+    }
+    
+    outputFile = arg;
+  } else if (arg == "--") {
+    parseMoreArgs = false;
+  } else if (arg == "-" || arg == "--help") {
     console.log("Usage:");
-    console.log("  serverside-renderer.js [--scale=1.0] [--format=svg] [--help]");
+    console.log("  serverside-renderer.js [--scale=1.0] [--format=svg] [--help] filename");
     console.log("");
     console.log("The program reads a WaveDrom description file from stdin and outputs");
-    console.log("a grapic in the given format to stdout.");
+    console.log("a graphic in the given format to stdout.");
     console.log("");
     console.log("Arguments:");
     console.log("  --scale=float      Scales the image by the given factor. This only makes sense for PNGs.");
@@ -59,21 +71,18 @@ for (var i = 1; i < system.args.length; i++) {
     phantom.exit(10);
   }
 }
+if (outputFile === null) {
+  console.log("Output filename expected!");
+  phantom.exit(10);
+  console.log("this is needed somehow, otherwise phantomjs does not quit?!");
+}
 
-var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" +
-"{ signal: [" +
-"  { name: 'A', wave: '01........0....',  node: '.a........j' }," +
-"  { name: 'B', wave: '0.1.......0.1..',  node: '..b.......i' }," +
-"  { name: 'C', wave: '0..1....0...1..',  node: '...c....h..' }," +
-"  { name: 'D', wave: '0...1..0.....1.',  node: '....d..g...' }," +
-"  { name: 'E', wave: '0....10.......1',  node: '.....ef....' }" +
-"  ]," +
-"  edge: [" +
-"    'a~b t1', 'c-~a t2', 'c-~>d time 3', 'd~-e'," +
-"    'e~>f', 'f->g', 'g-~>h', 'h~>i some text', 'h~->j'" +
-"  ]" +
-"}" +
-"</script></body></html>";
+var graphStr = "";
+while (!system.stdin.atEnd()) {
+  graphStr = graphStr + system.stdin.read(1024);
+}
+
+var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" + graphStr + "</script></body></html>";
 
 function renderNewPage(content, size) {
   var page = webPage.create();
@@ -119,20 +128,19 @@ var node = page.evaluate(function() {
   return node;
 });
 
-var svgText = page.evaluate(function() {
-  var body = document.getElementById('thebody');
-  var div = body.children[0];
-  return "" + div.innerHTML;
-});
+if (format == "svg") {
+  var svgText = page.evaluate(function() {
+    var body = document.getElementById('thebody');
+    var div = body.children[0];
+    return "" + div.innerHTML;
+  });
 
-console.log("Width:" + node.width);
-console.log("Height:" + node.height);
-
-var page = renderNewPage(content, {width: node.width, height: node.height});
-page.render("test.png", {format: "png"});
-
-var f = fs.open("test.svg", {mode: 'w', charset: 'UTF-8'});
-f.write(svgText);
-f.close();
+  var f = fs.open(outputFile, {mode: 'w', charset: 'UTF-8'});
+  f.write(svgText);
+  f.close();
+} else {
+  var page = renderNewPage(content, {width: Math.round(node.width * scale), height: Math.round(node.height * scale)});
+  page.render(outputFile, {format: "png"});
+}
 
 phantom.exit();
