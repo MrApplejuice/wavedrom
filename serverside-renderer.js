@@ -1,5 +1,64 @@
+"use strict";
+
 var webPage = require('webpage');
 var fs = require('fs');
+var system = require('system');
+
+var format = "svg";
+var scale = 1.0;
+
+// Define the function by ourself since introduced in ECMAScript 6 not yet supported by PhantomJS.
+function startsWith(str, start) {
+  if (start.length > str.length) {
+    return false;
+  }
+  for (var i = 0; i < start.length; i++) {
+    if (str[i] != start[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+for (var i = 1; i < system.args.length; i++) {
+  var arg = system.args[i];
+  if (arg == "-" || arg == "--help") {
+    console.log("Usage:");
+    console.log("  serverside-renderer.js [--scale=1.0] [--format=svg] [--help]");
+    console.log("");
+    console.log("The program reads a WaveDrom description file from stdin and outputs");
+    console.log("a grapic in the given format to stdout.");
+    console.log("");
+    console.log("Arguments:");
+    console.log("  --scale=float      Scales the image by the given factor. This only makes sense for PNGs.");
+    console.log("                     Default is 1.");
+    console.log("  --format=svg       The output format in which to generate the image. Options: svg, png.");
+    console.log("                     Default: svg");
+    console.log("  --help             Displays this help file.");
+    phantom.exit(0);
+  } else if (startsWith(arg, "--scale=")) {
+    var v = arg.slice("--scale=".length);
+    scale = parseFloat(v);
+    if (isNaN(scale)) {
+      console.log("Invalid float scale: " + v);
+      phantom.exit(10);
+    }
+    if (scale <= 0) {
+      console.log("Invalid scale " + scale + ". Scale must be > 0.");
+      phantom.exit(10);
+    }
+  } else if (startsWith(arg, "--format=")) {
+    var v = arg.slice("--format=".length).toLowerCase();
+    if (format != "svg" && format != "png") {
+      console.log("Invalid format: " + v);
+      phantom.exit(10);
+    }
+    format = v;
+  } else {
+    console.log("Invalid argument: " + arg);
+    phantom.exit(10);
+  }
+}
 
 var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" +
 "{ signal: [" +
