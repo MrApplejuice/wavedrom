@@ -75,6 +75,7 @@ if (outputFile === null) {
   console.log("Output filename expected!");
   phantom.exit(10);
 }
+console.log("Writing file: " + outputFile);
 
 var graphStr = "";
 while (!system.stdin.atEnd()) {
@@ -112,21 +113,6 @@ function renderNewPage(content, size) {
 
 var page = renderNewPage(content);
 
-var node = page.evaluate(function() {
-  var body = document.getElementById('thebody');
-  
-  var div = body.children[0];
-  var svg = div.children[0];
-
-  var svgRect = document.querySelector("div > svg").getBoundingClientRect();
-
-  var node = {};
-  node.width = svgRect.left + svgRect.right;
-  node.height = svgRect.top + svgRect.bottom;
-  
-  return node;
-});
-
 if (format == "svg") {
   var svgText = page.evaluate(function() {
     var body = document.getElementById('thebody');
@@ -137,9 +123,30 @@ if (format == "svg") {
   var f = fs.open(outputFile, {mode: 'w', charset: 'UTF-8'});
   f.write(svgText);
   f.close();
-} else {
-  var page = renderNewPage(content, {width: Math.round(node.width * scale), height: Math.round(node.height * scale)});
+  phantom.exit(0);
+} else if (format == "png") {
+  var node = page.evaluate(function() {
+    var body = document.getElementById('thebody');
+    
+    var div = body.children[0];
+    var svg = div.children[0];
+
+    var svgRect = document.querySelector("div > svg").getBoundingClientRect();
+
+    var node = {};
+    node.width = svgRect.left + svgRect.right;
+    node.height = svgRect.top + svgRect.bottom;
+    
+    return node;
+  });
+
+  var res = {width: Math.round(node.width * scale), height: Math.round(node.height * scale)};
+  
+  console.log("Resolution: " + res.width + " x " + res.height);
+  var page = renderNewPage(content, res);
   page.render(outputFile, {format: "png"});
+  phantom.exit(0);
+} else {
+  phantom.exit(10);
 }
 
-phantom.exit(0);
