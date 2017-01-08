@@ -1,0 +1,7 @@
+{
+  "name": "WaveDrom server-side render tool",
+  "main": "serverside-renderer.js",
+  "dependencies": {
+    "phantomjs": "^2.1.7"
+  }
+}
