@@ -1,4 +1,5 @@
 var webPage = require('webpage');
+var fs = require('fs');
 
 var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" +
 "{ signal: [" +
@@ -59,9 +60,20 @@ var node = page.evaluate(function() {
   return node;
 });
 
-console.log(node.width);
-console.log(node.height);
+var svgText = page.evaluate(function() {
+  var body = document.getElementById('thebody');
+  var div = body.children[0];
+  return "" + div.innerHTML;
+});
+
+console.log("Width:" + node.width);
+console.log("Height:" + node.height);
 
 var page = renderNewPage(content, {width: node.width, height: node.height});
 page.render("test.png", {format: "png"});
+
+var f = fs.open("test.svg", {mode: 'w', charset: 'UTF-8'});
+f.write(svgText);
+f.close();
+
 phantom.exit();
