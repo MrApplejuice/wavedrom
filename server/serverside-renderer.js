@@ -34,7 +34,7 @@ for (var i = 1; i < system.args.length; i++) {
     outputFile = arg;
   } else if (arg == "--") {
     parseMoreArgs = false;
-  } else if (arg == "-" || arg == "--help") {
+  } else if (arg == "-h" || arg == "--help") {
     console.log("Usage:");
     console.log("  serverside-renderer.js [--scale=1.0] [--format=svg] [--help] filename");
     console.log("");
@@ -144,6 +144,7 @@ if (format == "svg") {
   
   console.log("Resolution: " + res.width + " x " + res.height);
   var page = renderNewPage(content, res);
+  page.zoomFactor = scale;
   page.render(outputFile, {format: "png"});
   phantom.exit(0);
 } else {
