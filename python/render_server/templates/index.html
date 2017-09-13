@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<link rel="stylesheet" href="main.css">
+
+	  <title>WaveDrom static image generator</title>
+	</head>
+
+	<body>
+		<div id="text">
+			<h1 class="title">WaveDrom static image generator</h1>
+
+			<p>
+				Wavedrom is a tool programmed by Aliaksei Chapyzhenka that allows users to create technical timing diagrams for
+				use in electronics. It comes with an <a href="http://wavedrom.com/editor.html">online editor</a> to assist in the interactive construction
+				of timing diagrams. However, these timing diagrams can only be saved to static image formats from there which
+				are relatively big in comparison to the orignal timing diagram script and cannot directly be used on other pages
+				like forums without uploading the images elsewhere first.
+			</p>
+
+			<p>
+			  This server offers Aliaksei's wavedrom-generator as a service. Paste the wavedrom source script below and copy the
+				generated link to embed the graphics into your page. Alternatively, you can use the REST-API to generate your images
+				remotely.
+			</p>
+		</div>
+
+		<div id="generator">
+			<div id="textfield">
+				<h2>Enter your wavedrom script</h2>
+				<form id="fallback_form" method="POST" action="/rest/generate_link">
+					<textarea name="code" form="fallback_form"></textarea>
+					<input type="text" name="type" value="png" />
+					<input type="text" name="scale" value="1.0" />
+					<input type="hidden" name="redirect" value="true" />
+				<input type="submit">
+				</form>
+			</div>
+			<div id="generated">
+			  <h2>Generated image</h2>
+				<p id="generated_content">
+					No javascript means no dynamically generated content. Use the static form instead switch to a JavaScript enabled browser.
+				</p>
+			</div>
+		</div>
+
+		<div id="help">
+			<h1>REST API</h1>
+
+			<p>
+			  The REST API can be used by anyone to remotely generate wavedrom plots that can be embedded in online media, solving
+				the hosting issue for wavedrom users.
+			</p>
+
+			<h2>
+				Link generator
+			</h2>
+
+			<p class="code">
+				REQUEST_TYPE: POST
+			</p>
+
+			<p class="code">
+				URL: {{ protocol }}://{{ hostname }}/rest/generate_link?[type=png][scale=1.0]
+			</p>
+
+			<p>
+				The link generator receives text as input in the post body and compresses the received text using lzma compression. 
+				The maximum text length that can be submitted is 32768 bytes (truncated if necessary). The result will
+				be a link returned as text with the embedded base64-encoded compressed text appended to the URL as "c"-parameter.
+			</p>
+
+			<p>
+				In order to obtain the rendered graphic just use the link returned by the call to generate_link.
+			</p>
+
+			<h3>
+				Arguments
+			</h3>
+
+			<h4>
+				Image type (optional)
+			</h4>
+
+			<p class="code">
+				type=png|svg
+				default: png
+			</p>
+
+			<p class="arg">
+				Determines the type of the image that should be generated.
+			</p>
+
+			<h4>
+				Image scale (optional)
+			</h4>
+
+			<p class="code">
+				scale=[float]
+				default: 1.0
+			</p>
+
+			<p class="arg">
+				Give the scale ofthe image that should be generated as a zoom factor. This value is only valid if type is png and will be
+				ignored in all other cases. Minmal value is .1 and maximum value is 10.0. If the values lies outside the given range
+				the result will be silently clipped to these maximum values.
+			</p>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,50 @@
+body {
+	background-color: #CCCCFF;
+	font: 10pt "Open Sans", sans-serif;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+body > div {
+  background-color: #EEEEFF;
+
+	border-style: solid;
+	border-width: 1px;
+	border-color: black;
+
+	margin: 2px;
+	padding: .5cm;
+
+	max-width: 15cm;
+}
+
+body > div input, body > div textarea {
+	background-color: #EEEEFF;
+}
+
+h1, h2, h3 {
+	margin: 0;
+}
+
+h1.title {
+	font-family: Impact, "Open Sans", sans-serif;
+	font-weight: 100;
+
+	text-align: center;
+
+	border-bottom-style: solid;
+	border-color: #333377;
+	margin-bottom: 1em;
+}
+
+.arg {
+	margin-left: 1cm;
+}
+
+.code {
+	font: 10pt "Courier New", monospace;
+}
+
+
