@@ -13,15 +13,15 @@
 
 			<p>
 				Wavedrom is a tool programmed by Aliaksei Chapyzhenka that allows users to create technical timing diagrams for
-				use in electronics. It comes with an <a href="http://wavedrom.com/editor.html">online editor</a> to assist in the interactive construction
-				of timing diagrams. However, these timing diagrams can only be saved to static image formats from there which
-				are relatively big in comparison to the orignal timing diagram script and cannot directly be used on other pages
-				like forums without uploading the images elsewhere first.
+				use in electronics. It comes with an <a href="http://wavedrom.com/editor.html">online editor</a> to assist the interactive
+				construction of timing diagrams. However, the editor can only save the timing diagrams to local image files and to
+				publish these images on forums or other open websites, one must first manually upload them to an image server
+				because WaveDrom usually not supported natively.
 			</p>
 
 			<p>
-			  This server offers Aliaksei's wavedrom-generator as a service. Paste the wavedrom source script below and copy the
-				generated link to embed the graphics into your page. Alternatively, you can use the REST-API to generate your images
+			  This server offers Aliaksei's wavedrom-generator as a service. Paste your wavedrom source script below and copy the
+				generated image link to embed the graphics into your text. Alternatively, you can use the REST-API to generate your images
 				remotely.
 			</p>
 		</div>
@@ -30,17 +30,29 @@
 			<div id="textfield">
 				<h2>Enter your wavedrom script</h2>
 				<form id="fallback_form" method="POST" action="/rest/generate_link">
-					<textarea name="code" form="fallback_form"></textarea>
-					<input type="text" name="type" value="png" />
-					<input type="text" name="scale" value="1.0" />
+					<div>
+						<p>Code:</p>
+						<textarea name="code" form="fallback_form"></textarea>
+					</div>
+
+					<div class="options">
+						<div>
+							<p>Image type:</p>
+						  <input type="text" name="type" value="png" />
+						</div>
+						<div>
+							<p>Scale:</p>
+							<input type="text" name="scale" value="1.0" />
+						</div>
+					</div>
 					<input type="hidden" name="redirect" value="true" />
-				<input type="submit">
+					<input type="submit" value="Generate image" />
 				</form>
 			</div>
 			<div id="generated">
 			  <h2>Generated image</h2>
 				<p id="generated_content">
-					No javascript means no dynamically generated content. Use the static form instead switch to a JavaScript enabled browser.
+					No javascript means no dynamically generated content. Use the static form instead or switch to a JavaScript enabled browser.
 				</p>
 			</div>
 		</div>
