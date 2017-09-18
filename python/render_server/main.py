@@ -1,6 +1,7 @@
 import sys
 import os
 import shutil
+import io
 
 import base64
 import json
@@ -10,10 +11,35 @@ import falcon
 import tempfile
 import subprocess
 
+from contextlib import closing
+from PIL import Image, ImageDraw, ImageFont
+
 from urllib.parse import urlencode
 
 class ImageGenerationFailed(Exception):
     pass
+
+def render_image_error(text):
+    with closing(Image.new("RGBA", (600, 300), (0, 0, 0, 0))) as image:
+        max_width = 100
+        max_height = 0
+        
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype(font="Arial", size=20)
+        
+        x_offset, _ = draw.textsize("Error: ", font=font)
+        draw.text((0, 0), "Error: ", fill=(255, 0, 0, 255))
+        
+        w, h = draw.textsize(text, font=font)
+        max_width = min(max(max_width, w + x_offset), image.width)
+        max_height = min(max(max_height, h), image.height)
+        
+        draw.text((x_offset, 0), text, fill=(0, 0, 0, 255))
+        
+        with closing(image.crop((0, 0, max_width, max_height))) as subimage:
+            with closing(io.BytesIO()) as io_out:
+                subimage.save(io_out, "PNG")
+                return io_out.getvalue()
 
 def generate_image(image_type, scale, code):
     try:
@@ -21,9 +47,9 @@ def generate_image(image_type, scale, code):
 
         filename = os.path.join(tmpdir, "out")
         process_result = subprocess.run(
-            ["phantomjs", "server/serverside-renderer.js", "--format={}".format(image_type), "--scale={}".format(scale), filename],
+            ["phantomjs", "server/serverside-renderer.js", "--silent", "--format={}".format(image_type), "--scale={}".format(scale), filename],
             cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."),
-            input=code,
+            input=code if isinstance(code, bytes) else code.encode(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
        
@@ -35,6 +61,8 @@ def generate_image(image_type, scale, code):
         if process_result.returncode == 0:
             with open(filename, "rb") as f:
                 return f.read()
+        else:
+            return render_image_error(process_result.stdout.decode())
     finally:
         shutil.rmtree(tmpdir)
     return None
@@ -64,7 +92,7 @@ class HTMLContent:
         elif extension == ".css":
             inferred_mediatype = "text/css"
         elif extension == ".js":
-            inferred_mediatype = falcon.MEDIA_PNG
+            inferred_mediatype = falcon.MEDIA_JS
         elif extension == ".png":
             inferred_mediatype = falcon.MEDIA_PNG
         elif extension in (".jpg", ".jpeg"):
@@ -101,7 +129,7 @@ def parse_image_scale(scale):
     except ValueError:
         raise falcon.HTTPInternalServerError(
             title="Invalid scale parameter",
-            descirption="Scale must be a valid float between .1 and 10.0")
+            description="Scale must be a valid float between .1 and 10.0")
     else:
         return scale
 
@@ -117,7 +145,7 @@ class RestAPI:
 
             code = req.get_param("c", required=True)
             try:
-                binary_lzma_code = base64.b64decode(code.encode("utf8"))
+                binary_lzma_code = base64.b64decode(code.encode())
             except ValueError:
                 raise falcon.HTTPInternalServerError(
                     title="Code is not base64 encoded",
@@ -131,7 +159,7 @@ class RestAPI:
                     description="The provided code is note compressed using the correct lzma compression technique")
 
             if isinstance(plain_code, str):
-                plain_code = plain_code.encode("utf8")
+                plain_code = plain_code.encode()
 
             image = generate_image(image_type, scale, plain_code)
             if image is None:
@@ -166,13 +194,15 @@ class RestAPI:
             if code is None:
                 code = req.bounded_stream.read(32768)
             try:
-                generate_image("svg", 1.0, code.encode("utf8"))
+                generate_image("svg", 1.0, code)
             except ImageGenerationFailed:
                 raise falcon.HTTPInternalServerError(
                     title="Invalid WaveDrom code",
                     description="The WaveDrom code you submitted cannot be parsed by the WaveDrom generator")
 
-            compressed_code = base64.b64encode(lzma.compress(code.encode("utf8"))).decode("utf8")
+            compressed_code = base64.b64encode(
+                lzma.compress(code if isinstance(code, bytes) 
+                              else code.encode())).decode()
 
             url = "{hosturl}/rest/gen_image?{options}".format(
                 hosturl=derive_host_url(req),

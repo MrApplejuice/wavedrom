@@ -10,7 +10,7 @@ body {
 }
 
 body > div {
-  background-color: #EEEEFF;
+	background-color: #EEEEFF;
 
 	border-style: solid;
 	border-width: 1px;
@@ -20,6 +20,7 @@ body > div {
 	padding: .5cm;
 
 	max-width: 15cm;
+	width: 100%;
 }
 
 body > div input, body > div textarea {
@@ -97,4 +98,28 @@ div#textfield textarea {
 /* generated link area */
 div#generated {
 	margin-top: .5cm;
+}
+
+div#generated input.link {
+	margin-top: .5cm;
+	margin-bottom: .5cm;
+	width: 100%;
+}
+
+div#generated img {
+	max-width: 100%;
+}
+
+p.link-error:first-child {
+	margin-top: .5cm;
+}
+
+p.link-error {
+	background-color: red;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+p.link-error.title {
+	font-weight: bold;
 }

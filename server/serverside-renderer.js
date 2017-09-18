@@ -7,6 +7,7 @@ var system = require('system');
 var outputFile = null;
 var format = "svg";
 var scale = 1.0;
+var silent_mode = false;
 
 // Define the function by ourself since introduced in ECMAScript 6 not yet supported by PhantomJS.
 function startsWith(str, start) {
@@ -46,6 +47,7 @@ for (var i = 1; i < system.args.length; i++) {
     console.log("                     Default is 1.");
     console.log("  --format=svg       The output format in which to generate the image. Options: svg, png.");
     console.log("                     Default: svg");
+    console.log("  --silent           Disabled uneccessary program output, except for error message.");
     console.log("  --help             Displays this help file.");
     phantom.exit(0);
   } else if (startsWith(arg, "--scale=")) {
@@ -66,6 +68,8 @@ for (var i = 1; i < system.args.length; i++) {
       phantom.exit(10);
     }
     format = v;
+  } else if (arg == "--silent") {
+    silent_mode = true;
   } else {
     console.log("Invalid argument: " + arg);
     phantom.exit(10);
@@ -75,11 +79,22 @@ if (outputFile === null) {
   console.log("Output filename expected!");
   phantom.exit(10);
 }
-console.log("Writing file: " + outputFile);
+
+if (!silent_mode) {
+  console.log("Writing file: " + outputFile);
+}
 
 var graphStr = "";
 while (!system.stdin.atEnd()) {
   graphStr = graphStr + system.stdin.read(1024);
+}
+
+try {
+  JSON.parse(graphStr);
+}
+catch (e) {
+  console.log(e.name + ": " + e.message);
+  phantom.exit(10);
 }
 
 var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" + graphStr + "</script></body></html>";

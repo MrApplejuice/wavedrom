@@ -4,7 +4,34 @@
 	<head>
 		<link rel="stylesheet" href="main.css">
 
-	  <title>WaveDrom static image generator</title>
+		<title>WaveDrom static image generator</title>
+		
+		<script type="text/javascript" src="require.js">
+		</script>
+
+		<script type="text/javascript">
+			requirejs.config({
+				"paths": {
+					"jquery": "https://code.jquery.com/jquery-3.2.1.min"
+				}
+			});
+		</script>
+			
+		<script type="text/javascript">
+			require(["dyngen"], function(ui) {
+				console.log(ui);
+				var ui_update = ui.dynamically_update_generated_section(
+					"textarea#code_editor",
+					"#scale_selector",
+					"#image_type_selector",
+					"#generated_content");
+				
+				$(function() {
+					$("#generated_content").html("<p>Updating...</p>");
+					ui_update();
+				});
+			});
+		</script>
 	</head>
 
 	<body>
@@ -20,7 +47,7 @@
 			</p>
 
 			<p>
-			  This server offers Aliaksei's wavedrom-generator as a service. Paste your wavedrom source script below and copy the
+				This server offers Aliaksei's wavedrom-generator as a service. Paste your wavedrom source script below and copy the
 				generated image link to embed the graphics into your text. Alternatively, you can use the REST-API to generate your images
 				remotely.
 			</p>
@@ -32,21 +59,21 @@
 				<form id="fallback_form" method="POST" action="/rest/generate_link">
 					<div>
 						<p>Code:</p>
-						<textarea name="code" form="fallback_form"></textarea>
+						<textarea id="code_editor" name="code" form="fallback_form"></textarea>
 					</div>
 
 					<div class="options">
 						<div>
 							<p>Image type:</p>
 
-							<select name="type">
+							<select name="type" id="image_type_selector">
 								<option value="png">PNG</option>
 								<option value="svg">SVG</option>
 							</select>
 						</div>
 						<div>
 							<p>Scale:</p>
-							<input type="text" name="scale" value="1.0" />
+							<input type="text" name="scale" value="1.0" id="scale_selector" />
 						</div>
 					</div>
 					<input type="hidden" name="redirect" value="true" />
@@ -55,9 +82,11 @@
 			</div>
 			<div id="generated">
 			  <h2>Generated image</h2>
-				<p id="generated_content">
-					No javascript means no dynamically generated content. Use the static form instead or switch to a JavaScript enabled browser.
-				</p>
+				<span id="generated_content">
+					<p>
+						No javascript means no dynamically generated content. Use the static form instead or switch to a JavaScript enabled browser.
+					</p>
+				</span>
 			</div>
 		</div>
 
