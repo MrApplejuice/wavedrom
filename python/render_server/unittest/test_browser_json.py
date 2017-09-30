@@ -2,6 +2,8 @@ import unittest
 
 from browser_json import *
 
+import pyparsing as pp
+
 class TestParsing(unittest.TestCase):
     def testStringParsing(self):
         self.assertEqual(
@@ -48,6 +50,16 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(
             parse_browser_json(r'3426524525625471132467123513267418772562'),
             3426524525625471132467123513267418772562)
+        
+        with self.assertRaises(pp.ParseException):
+            parse_browser_json(r'-1. e-0'),
+            
+    def testParseNull(self):
+        self.assertEqual(
+            parse_browser_json(r'null'),
+            None)
+        with self.assertRaises(pp.ParseException):
+            parse_browser_json(r'NULL'),
 
     def notestArrayParsing(self):
         self.assertEqual(

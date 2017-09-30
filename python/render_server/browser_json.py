@@ -12,12 +12,16 @@ REAL = pp.pyparsing_common.real \
 REAL.leaveWhitespace()
 NUMBER = REAL("FNUM") | pp.pyparsing_common.signed_integer("INUM")
 
+NULL = pp.Literal("null")("NULL")
+
 LBRACKET = pp.Suppress("[")
 RBRACKET = pp.Suppress("]")
 
-GRAMMAR = STRING | NUMBER
 
-class TranslateException(pp.ParseException): pass
+
+GRAMMAR = STRING | NUMBER | NULL
+
+class TranslateException(Exception): pass
 
 def parse_browser_json(text):
     the_parse = GRAMMAR.parseString(text, parseAll=True)
@@ -31,11 +35,11 @@ def parse_browser_json(text):
         if obj.getName() == "STR":
             return str(obj[0])
         if obj.getName() == "FNUM":
-            print("Captured string: ", obj[0])
             return float(obj[0])
         if obj.getName() == "INUM":
-            print("Captured string: ", obj[0])
             return int(obj[0])
+        if obj.getName() == "NULL":
+            return None
         else:
             raise TranslateException("Unknown parse object of type: {}".format(obj.getName()))
     
