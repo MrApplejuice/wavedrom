@@ -55,11 +55,25 @@ class TestParsing(unittest.TestCase):
             parse_browser_json(r'-1. e-0'),
             
     def testParseNull(self):
-        self.assertEqual(
+        self.assertIs(
             parse_browser_json(r'null'),
             None)
         with self.assertRaises(pp.ParseException):
             parse_browser_json(r'NULL'),
+
+    def testParseBool(self):
+        self.assertIs(
+            parse_browser_json(r'true'),
+            True)
+        self.assertIs(
+            parse_browser_json(r'false'),
+            False)
+        with self.assertRaises(pp.ParseException):
+            parse_browser_json(r'True'),
+        with self.assertRaises(pp.ParseException):
+            parse_browser_json(r'False'),
+        with self.assertRaises(pp.ParseException):
+            parse_browser_json(r'TRUE'),
 
     def notestArrayParsing(self):
         self.assertEqual(
