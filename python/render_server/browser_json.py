@@ -1,5 +1,7 @@
 import pyparsing as pp
 
+DEBUG_PRINT = lambda *args, **argv: None
+
 STRING = (pp.QuotedString(quoteChar="'", escChar="\\") \
     | pp.QuotedString(quoteChar='"', escChar="\\"))("STR")
     
@@ -26,7 +28,7 @@ GRAMMAR = ELEMENT
 class TranslateException(Exception): pass
 
 def gen_data_container(value, _type=lambda x: x):
-    print("wrapping", value)
+    DEBUG_PRINT("wrapping", value)
     def f():
         v2 = _type(value)
         if isinstance(v2, list):
@@ -37,7 +39,7 @@ def gen_data_container(value, _type=lambda x: x):
     return f
 
 def translate_to_python(obj):
-    print(type(obj), obj.getName(), len(obj), str(obj[0]), type(obj[0]))
+    DEBUG_PRINT(type(obj), obj.getName(), len(obj), str(obj[0]), type(obj[0]))
 
     if obj.getName() is None:
         return obj[0]
@@ -58,8 +60,8 @@ def translate_to_python(obj):
 GRAMMAR.setParseAction(translate_to_python)
 
 def parse_browser_json(text):
-    print("----------------")
-    print("text:", text)
+    DEBUG_PRINT("----------------")
+    DEBUG_PRINT("text:", text)
     
     the_parse = GRAMMAR.parseString(text, parseAll=True)
     
@@ -68,6 +70,6 @@ def parse_browser_json(text):
         the_parse = the_parse[0]
     the_parse = the_parse()
     
-    print("final parse:", the_parse)
+    DEBUG_PRINT("final parse:", the_parse)
     
     return the_parse

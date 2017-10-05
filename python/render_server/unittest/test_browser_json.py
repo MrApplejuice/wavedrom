@@ -1,8 +1,11 @@
 import unittest
 
+import browser_json
 from browser_json import *
 
 import pyparsing as pp
+
+browser_json.DEBUG_PRINT = print
 
 class TestParsing(unittest.TestCase):
     def testStringParsing(self):
@@ -77,18 +80,20 @@ class TestParsing(unittest.TestCase):
 
     def testArrayParsing(self):
         code = r"""[1, true, null, false, 1.2, -1.12e-5, "string", 'string']"""
-        print(code)
         self.assertEqual(
             parse_browser_json(code),
             [1, True, None, False, 1.2, -1.12e-5, "string", 'string']
         )
 
         code = r"""[1, true, null, false, [], 1.2, -1.12e-5, "string", 'string']"""
-        print(code)
         self.assertEqual(
             parse_browser_json(code),
             [1, True, None, False, [], 1.2, -1.12e-5, "string", 'string']
         )
+
+        with self.assertRaises(pp.ParseException):
+            code = r"""[1, true, null, false, [], 1.2, -1.12e-5, "string", 'string'"""
+            parse_browser_json(code)
 
 if __name__ == "__main__":
     unittest.main()
