@@ -103,7 +103,6 @@ class TestParsing(unittest.TestCase):
             ], str2: 8
         }
         """
-
         self.assertEqual(
             parse_browser_json(code),
             {'str1': [ 1 ], 'str2': 8 }
@@ -132,6 +131,32 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(
             parse_browser_json(code),
             {"a": "a"}
+        )
+
+    def testComments(self):
+        code = r"""
+        {
+            'str1': [
+                1
+//            ], str2: 8
+]
+        }
+        """
+        self.assertEqual(
+            parse_browser_json(code),
+            {'str1': [ 1 ] }
+        )
+        code = r"""
+        {
+            'str1': [
+                1
+/*            ], st*//*r**///2: 8
+]
+        }
+        """
+        self.assertEqual(
+            parse_browser_json(code),
+            {'str1': [ 1 ] }
         )
 
 if __name__ == "__main__":

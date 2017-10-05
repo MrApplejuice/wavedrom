@@ -79,6 +79,8 @@ ELEMENT.setParseAction(translate_to_python)
 
 GRAMMAR = ELEMENT
 GRAMMAR.setParseAction(translate_to_python)
+GRAMMAR.ignore(pp.cStyleComment)
+GRAMMAR.ignore(pp.dblSlashComment)
 
 
 def parse_browser_json(text):
