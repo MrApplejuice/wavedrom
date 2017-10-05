@@ -97,7 +97,9 @@ catch (e) {
   phantom.exit(10);
 }
 
-var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>" + graphStr + "</script></body></html>";
+var content = "<html><head></head><body id='thebody'><script type='WaveDrom'>"
+    + graphStr.replace(/\//g, "\\u002F").replace(/\\/g, "\\\\")
+    + "</script></body></html>";
 
 function renderNewPage(content, size) {
   var page = webPage.create();

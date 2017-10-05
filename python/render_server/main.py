@@ -44,14 +44,14 @@ def render_image_error(text):
                 return io_out.getvalue()
 
 def generate_image(image_type, scale, code):
-    print("------- code start ----------")
-    print(type(code))
-    print(code)
+    #print("------- code start ----------")
+    #print(type(code))
+    #print(code)
     
-    print("------- code normalized ----------")
+    #print("------- code normalized ----------")
     code = json.dumps(browser_json.parse_browser_json(code.decode() if isinstance(code, bytes) else code))
-    print(code)
-    print("------- code end ----------")
+    #print(code)
+    #print("------- code end ----------")
     
     try:
         tmpdir = tempfile.mkdtemp()
