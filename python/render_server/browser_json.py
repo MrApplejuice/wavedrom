@@ -2,42 +2,20 @@ import pyparsing as pp
 
 DEBUG_PRINT = lambda *args, **argv: None
 
-STRING = (pp.QuotedString(quoteChar="'", escChar="\\") \
-    | pp.QuotedString(quoteChar='"', escChar="\\"))("STR")
-    
-REAL = pp.pyparsing_common.real \
-    ^ pp.pyparsing_common.sci_real \
-    ^ pp.Combine(
-        pp.Optional(pp.pyparsing_common.signed_integer) \
-        + "." + pp.Optional(pp.pyparsing_common.integer) \
-        + pp.Optional("e" + pp.pyparsing_common.signed_integer))
-REAL.leaveWhitespace()
-NUMBER = REAL("FNUM") | pp.pyparsing_common.signed_integer("INUM")
-
-NULL = pp.Literal("null")("NULL")
-
-BOOL = (pp.Literal("true") | pp.Literal("false"))("BOOL")
-
-ELEMENT = pp.Forward()
-ARRAY = pp.Group(pp.Suppress("[") + pp.Optional(ELEMENT + pp.ZeroOrMore(pp.Suppress(",") + ELEMENT)) + pp.Suppress("]"))("ARRAY")
-
-ELEMENT << (STRING | NUMBER | NULL | BOOL | ARRAY)
-
-GRAMMAR = ELEMENT
-
-class TranslateException(Exception): pass
-
 def gen_data_container(value, _type=lambda x: x):
     DEBUG_PRINT("wrapping", value)
     def f():
+        DEBUG_PRINT("unwrapping", value)
         v2 = _type(value)
         if isinstance(v2, list):
             v2 = [x() for x in v2]
         elif isinstance(v2, dict):
-            v2 = {k(): v() for k, v in v2}
+            v2 = {k(): v() for k, v in v2.items()}
+        DEBUG_PRINT("unwrapped", v2)
         return v2
     return f
 
+class TranslateException(Exception): pass
 def translate_to_python(obj):
     DEBUG_PRINT(type(obj), obj.getName(), len(obj), str(obj[0]), type(obj[0]))
 
@@ -55,9 +33,53 @@ def translate_to_python(obj):
         return gen_data_container(str(obj[0]) == "true")
     elif obj.getName() == "ARRAY":
         return gen_data_container(obj[0], list)
+    elif obj.getName() == "OBJECT":
+        def generate_dict(items):
+            result = {}
+            for i in items:
+                result[i[0]] = i[1]
+            return result
+        return gen_data_container(list(obj[0]), generate_dict)
+    elif obj.getName() == "OBJECT_FIELD":
+        return (obj[0], obj[1])
     else:
         raise TranslateException("Unknown parse object of type: {}".format(obj.getName()))
+
+
+STRING = (pp.QuotedString(quoteChar="'", escChar="\\") \
+    | pp.QuotedString(quoteChar='"', escChar="\\"))("STR")
+    
+REAL = pp.pyparsing_common.real \
+    ^ pp.pyparsing_common.sci_real \
+    ^ pp.Combine(
+        pp.Optional(pp.pyparsing_common.signed_integer) \
+        + "." + pp.Optional(pp.pyparsing_common.integer) \
+        + pp.Optional("e" + pp.pyparsing_common.signed_integer))
+REAL.leaveWhitespace()
+NUMBER = REAL("FNUM") | pp.pyparsing_common.signed_integer("INUM")
+
+NULL = pp.Literal("null")("NULL")
+
+BOOL = (pp.Literal("true") | pp.Literal("false"))("BOOL")
+
+VALUE = STRING | NUMBER | NULL | BOOL
+VALUE.setParseAction(translate_to_python)
+
+ELEMENT = pp.Forward()
+ARRAY = pp.Group(pp.Suppress("[") + pp.Optional(ELEMENT + pp.ZeroOrMore(pp.Suppress(",") + ELEMENT)) + pp.Suppress("]"))("ARRAY")
+
+NAKED_FIELD_NAME = pp.Word(pp.alphas, pp.alphanums + "_")("STR")
+NAKED_FIELD_NAME.setParseAction(translate_to_python)
+OBJECT_FIELD = ((VALUE | NAKED_FIELD_NAME) + pp.Suppress(":") + ELEMENT)("OBJECT_FIELD")
+OBJECT_FIELD.setParseAction(translate_to_python)
+OBJECT = pp.Group(pp.Suppress("{") + pp.Optional(OBJECT_FIELD + pp.ZeroOrMore(pp.Suppress(",") + OBJECT_FIELD)) + pp.Suppress("}"))("OBJECT")
+
+ELEMENT << (VALUE | ARRAY | OBJECT)
+ELEMENT.setParseAction(translate_to_python)
+
+GRAMMAR = ELEMENT
 GRAMMAR.setParseAction(translate_to_python)
+
 
 def parse_browser_json(text):
     DEBUG_PRINT("----------------")

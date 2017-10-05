@@ -95,5 +95,33 @@ class TestParsing(unittest.TestCase):
             code = r"""[1, true, null, false, [], 1.2, -1.12e-5, "string", 'string'"""
             parse_browser_json(code)
 
+    def testObjectParsing(self):
+        code = r"""
+        {
+            'str1': [
+                1
+            ], str2: 8
+        }
+        """
+
+        self.assertEqual(
+            parse_browser_json(code),
+            {'str1': [ 1 ], 'str2': 8 }
+        )
+
+        code = r"""
+        {
+            'str1': [
+                1
+            ],
+            "str2": [],
+            no_str: { message: "should still work" }
+        }
+        """
+        self.assertEqual(
+            parse_browser_json(code),
+            {'str1': [ 1 ], 'str2': [], "no_str": { "message": "should still work" } }
+        )
+
 if __name__ == "__main__":
     unittest.main()
