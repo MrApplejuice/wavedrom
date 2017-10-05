@@ -45,6 +45,13 @@ def translate_to_python(obj):
     else:
         raise TranslateException("Unknown parse object of type: {}".format(obj.getName()))
 
+def at(x):
+    """ at = add translate """
+    x.setParseAction(translate_to_python)
+    return x
+
+
+### GRAMMAR ###
 
 STRING = (pp.QuotedString(quoteChar="'", escChar="\\") \
     | pp.QuotedString(quoteChar='"', escChar="\\"))("STR")
@@ -62,23 +69,18 @@ NULL = pp.Literal("null")("NULL")
 
 BOOL = (pp.Literal("true") | pp.Literal("false"))("BOOL")
 
-VALUE = STRING | NUMBER | NULL | BOOL
-VALUE.setParseAction(translate_to_python)
+VALUE = at(STRING | NUMBER | NULL | BOOL)
 
 ELEMENT = pp.Forward()
 ARRAY = pp.Group(pp.Suppress("[") + pp.Optional(ELEMENT + pp.ZeroOrMore(pp.Suppress(",") + ELEMENT)) + pp.Suppress("]"))("ARRAY")
 
-NAKED_FIELD_NAME = pp.Word(pp.alphas, pp.alphanums + "_")("STR")
-NAKED_FIELD_NAME.setParseAction(translate_to_python)
-OBJECT_FIELD = ((VALUE | NAKED_FIELD_NAME) + pp.Suppress(":") + ELEMENT)("OBJECT_FIELD")
-OBJECT_FIELD.setParseAction(translate_to_python)
+NAKED_FIELD_NAME = at(pp.Word(pp.alphas, pp.alphanums + "_")("STR"))
+OBJECT_FIELD = at(((VALUE | NAKED_FIELD_NAME) + pp.Suppress(":") + ELEMENT)("OBJECT_FIELD"))
 OBJECT = pp.Group(pp.Suppress("{") + pp.Optional(OBJECT_FIELD + pp.ZeroOrMore(pp.Suppress(",") + OBJECT_FIELD) + pp.Optional(",").suppress()) + pp.Suppress("}"))("OBJECT")
 
-ELEMENT << (VALUE | ARRAY | OBJECT)
-ELEMENT.setParseAction(translate_to_python)
+ELEMENT << at(VALUE | ARRAY | OBJECT)
 
-GRAMMAR = ELEMENT
-GRAMMAR.setParseAction(translate_to_python)
+GRAMMAR = at(ELEMENT)
 GRAMMAR.ignore(pp.cStyleComment)
 GRAMMAR.ignore(pp.dblSlashComment)
 
