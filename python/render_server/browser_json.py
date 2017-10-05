@@ -72,7 +72,7 @@ NAKED_FIELD_NAME = pp.Word(pp.alphas, pp.alphanums + "_")("STR")
 NAKED_FIELD_NAME.setParseAction(translate_to_python)
 OBJECT_FIELD = ((VALUE | NAKED_FIELD_NAME) + pp.Suppress(":") + ELEMENT)("OBJECT_FIELD")
 OBJECT_FIELD.setParseAction(translate_to_python)
-OBJECT = pp.Group(pp.Suppress("{") + pp.Optional(OBJECT_FIELD + pp.ZeroOrMore(pp.Suppress(",") + OBJECT_FIELD)) + pp.Suppress("}"))("OBJECT")
+OBJECT = pp.Group(pp.Suppress("{") + pp.Optional(OBJECT_FIELD + pp.ZeroOrMore(pp.Suppress(",") + OBJECT_FIELD) + pp.Optional(",").suppress()) + pp.Suppress("}"))("OBJECT")
 
 ELEMENT << (VALUE | ARRAY | OBJECT)
 ELEMENT.setParseAction(translate_to_python)
