@@ -16,6 +16,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from urllib.parse import urlencode
 
+import browser_json
+
 class ImageGenerationFailed(Exception):
     pass
 
@@ -44,6 +46,10 @@ def render_image_error(text):
 def generate_image(image_type, scale, code):
     print("------- code start ----------")
     print(type(code))
+    print(code)
+    
+    print("------- code normalized ----------")
+    code = json.dumps(browser_json.parse_browser_json(code.decode() if isinstance(code, bytes) else code))
     print(code)
     print("------- code end ----------")
     

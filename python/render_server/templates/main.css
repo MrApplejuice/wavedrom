@@ -107,7 +107,7 @@ div#generated input.link {
 }
 
 div#generated img {
-	max-width: 100%;
+	width: 100%;
 }
 
 p.link-error:first-child {
