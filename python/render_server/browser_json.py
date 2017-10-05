@@ -16,35 +16,58 @@ NULL = pp.Literal("null")("NULL")
 
 BOOL = (pp.Literal("true") | pp.Literal("false"))("BOOL")
 
-LBRACKET = pp.Suppress("[")
-RBRACKET = pp.Suppress("]")
+ELEMENT = pp.Forward()
+ARRAY = pp.Group(pp.Suppress("[") + pp.Optional(ELEMENT + pp.ZeroOrMore(pp.Suppress(",") + ELEMENT)) + pp.Suppress("]"))("ARRAY")
 
+ELEMENT << (STRING | NUMBER | NULL | BOOL | ARRAY)
 
-
-GRAMMAR = STRING | NUMBER | NULL | BOOL
+GRAMMAR = ELEMENT
 
 class TranslateException(Exception): pass
 
+def gen_data_container(value, _type=lambda x: x):
+    print("wrapping", value)
+    def f():
+        v2 = _type(value)
+        if isinstance(v2, list):
+            v2 = [x() for x in v2]
+        elif isinstance(v2, dict):
+            v2 = {k(): v() for k, v in v2}
+        return v2
+    return f
+
+def translate_to_python(obj):
+    print(type(obj), obj.getName(), len(obj), str(obj[0]), type(obj[0]))
+
+    if obj.getName() is None:
+        return obj[0]
+    elif obj.getName() == "STR":
+        return gen_data_container(obj[0], str)
+    elif obj.getName() == "FNUM":
+        return gen_data_container(obj[0], float)
+    elif obj.getName() == "INUM":
+        return gen_data_container(obj[0], int)
+    elif obj.getName() == "NULL":
+        return gen_data_container(None)
+    elif obj.getName() == "BOOL":
+        return gen_data_container(str(obj[0]) == "true")
+    elif obj.getName() == "ARRAY":
+        return gen_data_container(obj[0], list)
+    else:
+        raise TranslateException("Unknown parse object of type: {}".format(obj.getName()))
+GRAMMAR.setParseAction(translate_to_python)
+
 def parse_browser_json(text):
+    print("----------------")
+    print("text:", text)
+    
     the_parse = GRAMMAR.parseString(text, parseAll=True)
     
-    print(the_parse)
+    # Damnit - I do not get what pyparsing returns... 
+    while isinstance(the_parse, pp.ParseResults):
+        the_parse = the_parse[0]
+    the_parse = the_parse()
     
-    # Translate the parse
-    def translate_to_python(obj):
-        print(type(obj), obj.getName())
-
-        if obj.getName() == "STR":
-            return str(obj[0])
-        elif obj.getName() == "FNUM":
-            return float(obj[0])
-        elif obj.getName() == "INUM":
-            return int(obj[0])
-        elif obj.getName() == "NULL":
-            return None
-        elif obj.getName() == "BOOL":
-            return str(obj[0]) == "true"
-        else:
-            raise TranslateException("Unknown parse object of type: {}".format(obj.getName()))
+    print("final parse:", the_parse)
     
-    return translate_to_python(the_parse)
+    return the_parse

@@ -75,9 +75,18 @@ class TestParsing(unittest.TestCase):
         with self.assertRaises(pp.ParseException):
             parse_browser_json(r'TRUE'),
 
-    def notestArrayParsing(self):
+    def testArrayParsing(self):
+        code = r"""[1, true, null, false, 1.2, -1.12e-5, "string", 'string']"""
+        print(code)
         self.assertEqual(
-            parse_browser_json("""[1, true, null, false, [], 1.2, -1.12e-5, "string", 'string']"""),
+            parse_browser_json(code),
+            [1, True, None, False, 1.2, -1.12e-5, "string", 'string']
+        )
+
+        code = r"""[1, true, null, false, [], 1.2, -1.12e-5, "string", 'string']"""
+        print(code)
+        self.assertEqual(
+            parse_browser_json(code),
             [1, True, None, False, [], 1.2, -1.12e-5, "string", 'string']
         )
 
