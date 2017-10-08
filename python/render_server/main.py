@@ -2,7 +2,7 @@ import sys
 import os
 import shutil
 import io
-
+import math
 import base64
 import json
 import lzma
@@ -49,6 +49,9 @@ def render_image_error(text):
                 return io_out.getvalue()
 
 def generate_image(image_type, scale, code):
+    if code.strip() == "":
+        return render_image_error("No code supplied")
+    
     #print("------- code start ----------")
     #print(type(code))
     #print(code)
@@ -57,7 +60,9 @@ def generate_image(image_type, scale, code):
     try:
         code = json.dumps(browser_json.parse_browser_json(code.decode() if isinstance(code, bytes) else code))
     except pp.ParseException as e:
-        return render_image_error(str(e))
+        return render_image_error("invalid json syntax")
+        #errMsg = str(e)
+        #return render_image_error("\n".join(errMsg[i*80:(i+1)*80] for i in range(math.ceil(len(errMsg) / 80))))
     #print(code)
     #print("------- code end ----------")
     
@@ -181,6 +186,7 @@ def compress_text(text):
         text.encode() if isinstance(text, str) 
         else code)
 
+    t = compressed_bytes
     compression_mode = 0
     if compressed_bytes[:len(STANDARD_COMPRESSION_PREFIX)] == STANDARD_COMPRESSION_PREFIX:
         compression_mode |= 1
@@ -210,9 +216,9 @@ def decompress_text(text):
             title="Code is not base64 encoded",
             description="The provided code is not encoded in the base64 format")
 
-    if (mode | 1) != 0:
+    if (mode & 1) != 0:
         binary_lzma_code = STANDARD_COMPRESSION_PREFIX + binary_lzma_code
-    if (mode | 2) != 0:
+    if (mode & 2) != 0:
         binary_lzma_code = binary_lzma_code + STANDARD_COMPRESSION_POSTFIX
     
     try:
@@ -317,7 +323,7 @@ if __name__ in ("__main__", "main"):
 
     fapi.req_options.auto_parse_form_urlencoded = True
 
-    fapi.add_route("/", StaticRedirect("html"))
+    fapi.add_route("/", StaticRedirect("/html/"))
     fapi.add_route("/html/", StaticRedirect("index.html"))
 
     fapi.add_route("/html/{filename}", html_content)
