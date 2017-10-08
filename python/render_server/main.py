@@ -152,6 +152,31 @@ def parse_image_scale(scale):
     else:
         return scale
 
+def compress_text(text):
+    return base64.b64encode(
+        lzma.compress(text.encode() if isinstance(text, str) 
+                      else code)).decode()
+
+def decompress_text(text):
+    try:
+        binary_lzma_code = base64.b64decode(text)
+    except ValueError:
+        raise falcon.HTTPInternalServerError(
+            title="Code is not base64 encoded",
+            description="The provided code is not encoded in the base64 format")
+
+    try:
+        plain_code = lzma.decompress(binary_lzma_code)
+    except lzma.LZMAError:
+        raise falcon.HTTPInternalServerError(
+            title="Code is not compressed",
+            description="The provided code is note compressed using the correct lzma compression technique")
+
+    if isinstance(plain_code, str):
+        plain_code = plain_code.encode()
+        
+    return plain_code
+
 class RestAPI:
     def on_get(self, req, response, cmd="[None]"):
         cmd = cmd.lower()
@@ -163,22 +188,8 @@ class RestAPI:
             scale = parse_image_scale(scale)
 
             code = req.get_param("c", required=True)
-            try:
-                binary_lzma_code = base64.b64decode(code.encode())
-            except ValueError:
-                raise falcon.HTTPInternalServerError(
-                    title="Code is not base64 encoded",
-                    description="The provided code is not encoded in the base64 format")
-
-            try:
-                plain_code = lzma.decompress(binary_lzma_code)
-            except lzma.LZMAError:
-                raise falcon.HTTPInternalServerError(
-                    title="Code is not compressed",
-                    description="The provided code is note compressed using the correct lzma compression technique")
-
-            if isinstance(plain_code, str):
-                plain_code = plain_code.encode()
+            
+            plain_code = decompress_text(code.encode())
 
             image = generate_image(image_type, scale, plain_code)
             if image is None:
@@ -219,9 +230,7 @@ class RestAPI:
                     title="Invalid WaveDrom code",
                     description="The WaveDrom code you submitted cannot be parsed by the WaveDrom generator")
 
-            compressed_code = base64.b64encode(
-                lzma.compress(code if isinstance(code, bytes) 
-                              else code.encode())).decode()
+            compressed_code = compress_text(code.decode() if isinstance(code, bytes) else code)
 
             url = "{hosturl}/rest/gen_image?{options}".format(
                 hosturl=derive_host_url(req),
