@@ -16,18 +16,23 @@ from PIL import Image, ImageDraw, ImageFont
 
 from urllib.parse import urlencode
 
+import pyparsing as pp
 import browser_json
 
 class ImageGenerationFailed(Exception):
     pass
 
 def render_image_error(text):
+    text = text.strip()
     with closing(Image.new("RGBA", (600, 300), (0, 0, 0, 0))) as image:
         max_width = 100
         max_height = 0
         
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(font="Arial", size=20)
+        try:
+            font = ImageFont.truetype(font="Arial", size=20)
+        except OSError:
+            font = ImageFont.truetype(font="DejaVuSansMono", size=20)
         
         x_offset, _ = draw.textsize("Error: ", font=font)
         draw.text((0, 0), "Error: ", fill=(255, 0, 0, 255))
@@ -49,7 +54,10 @@ def generate_image(image_type, scale, code):
     #print(code)
     
     #print("------- code normalized ----------")
-    code = json.dumps(browser_json.parse_browser_json(code.decode() if isinstance(code, bytes) else code))
+    try:
+        code = json.dumps(browser_json.parse_browser_json(code.decode() if isinstance(code, bytes) else code))
+    except pp.ParseException as e:
+        return render_image_error(str(e))
     #print(code)
     #print("------- code end ----------")
     
