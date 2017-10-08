@@ -152,19 +152,69 @@ def parse_image_scale(scale):
     else:
         return scale
 
+
+def compute_compression_prepostfixes():
+    single1_compression = lzma.compress(b'{default: [ "more things!" ]}')
+    single2_compression = lzma.compress(b'{x: "asdf", diferetn: 9, [2 3 4 5 1012 ]}' * 5)
+    
+    global STANDARD_COMPRESSION_PREFIX, STANDARD_COMPRESSION_POSTFIX
+    
+    l = 0
+    for i in range(min(len(single1_compression), len(single2_compression))):
+        if single1_compression[i] == single2_compression[i]:
+            l += 1
+        else:
+            break
+    STANDARD_COMPRESSION_PREFIX = single1_compression[:l]
+    
+    l = 0
+    for i in range(min(len(single1_compression), len(single2_compression))):
+        if single1_compression[-1 - i] == single2_compression[-1 - i]:
+            l -= 1
+        else:
+            break
+    STANDARD_COMPRESSION_POSTFIX = "" if l == 0 else single1_compression[l:]
+compute_compression_prepostfixes()
+
 def compress_text(text):
-    return base64.b64encode(
-        lzma.compress(text.encode() if isinstance(text, str) 
-                      else code)).decode()
+    compressed_bytes = lzma.compress(
+        text.encode() if isinstance(text, str) 
+        else code)
+
+    compression_mode = 0
+    if compressed_bytes[:len(STANDARD_COMPRESSION_PREFIX)] == STANDARD_COMPRESSION_PREFIX:
+        compression_mode |= 1
+        compressed_bytes = compressed_bytes[len(STANDARD_COMPRESSION_PREFIX):]
+    if len(STANDARD_COMPRESSION_POSTFIX) > 0:
+        if compressed_bytes[-len(STANDARD_COMPRESSION_POSTFIX):] == STANDARD_COMPRESSION_POSTFIX:
+            compression_mode |= 2
+            compressed_bytes = compressed_bytes[:-len(STANDARD_COMPRESSION_POSTFIX)]
+    
+    return str(compression_mode) + base64.b64encode(compressed_bytes).decode()
 
 def decompress_text(text):
+    mode = chr(text[0])
     try:
-        binary_lzma_code = base64.b64decode(text)
+        mode = int(mode)
+        if not (0 <= mode < (1 << 2)):
+            raise ValueError("...")
+    except ValueError:
+        raise falcon.HTTPInternalServerError(
+            title="Invalid code",
+            description="The supplied code is missing the encoding mode byte.")
+    
+    try:
+        binary_lzma_code = base64.b64decode(text[1:])
     except ValueError:
         raise falcon.HTTPInternalServerError(
             title="Code is not base64 encoded",
             description="The provided code is not encoded in the base64 format")
 
+    if (mode | 1) != 0:
+        binary_lzma_code = STANDARD_COMPRESSION_PREFIX + binary_lzma_code
+    if (mode | 2) != 0:
+        binary_lzma_code = binary_lzma_code + STANDARD_COMPRESSION_POSTFIX
+    
     try:
         plain_code = lzma.decompress(binary_lzma_code)
     except lzma.LZMAError:
@@ -174,7 +224,7 @@ def decompress_text(text):
 
     if isinstance(plain_code, str):
         plain_code = plain_code.encode()
-        
+
     return plain_code
 
 class RestAPI:
@@ -230,7 +280,7 @@ class RestAPI:
                     title="Invalid WaveDrom code",
                     description="The WaveDrom code you submitted cannot be parsed by the WaveDrom generator")
 
-            compressed_code = compress_text(code.decode() if isinstance(code, bytes) else code)
+            compressed_code = compress_text((code.decode() if isinstance(code, bytes) else code).strip())
 
             url = "{hosturl}/rest/gen_image?{options}".format(
                 hosturl=derive_host_url(req),
