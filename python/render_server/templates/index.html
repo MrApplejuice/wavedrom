@@ -31,6 +31,9 @@
 					ui_update();
 				});
 			});
+			require(["jquery"], function(ui) {
+				$("input[type='submit']").css("display", "none");
+			});
 		</script>
 	</head>
 
@@ -39,17 +42,16 @@
 			<h1 class="title">WaveDrom static image generator</h1>
 
 			<p>
-				Wavedrom is a tool programmed by Aliaksei Chapyzhenka that allows users to create technical timing diagrams for
-				use in electronics. It comes with an <a href="http://wavedrom.com/editor.html">online editor</a> to assist the interactive
-				construction of timing diagrams. However, the editor can only save the timing diagrams to local image files and to
-				publish these images on forums or other open websites, one must first manually upload them to an image server
-				because WaveDrom usually not supported natively.
+				Wavedrom is a tool programmed by Aliaksei Chapyzhenka that allows users to create technical timing diagrams typically used
+				in electronics. It comes with an <a href="http://wavedrom.com/editor.html">online editor</a> to assist the interactive
+				construction of timing diagrams. However, the editor does not server timing diagrams ondemand over the internet. This makes
+				embedding these timing diagrams into forum posts harder since one needs to first export the images, upload them to the forum
+				and then embed them (in case the forum does not have wavedrom support).
 			</p>
 
 			<p>
 				This server offers Aliaksei's wavedrom-generator as a service. Paste your wavedrom source script below and copy the
-				generated image link to embed the graphics into your text. Alternatively, you can use the REST-API to generate your images
-				remotely.
+				generated image link to embed the graphics to any other website you like.
 			</p>
 		</div>
 
@@ -59,7 +61,10 @@
 				<form id="fallback_form" method="POST" action="/rest/generate_link">
 					<div>
 						<p>Code:</p>
-						<textarea id="code_editor" name="code" form="fallback_form"></textarea>
+						<textarea id="code_editor" name="code" form="fallback_form">{signal: [
+  {name: 'clock', wave: 'p.......'},
+  {name: 'value', wave: '0.10..10'}
+]}</textarea>
 					</div>
 
 					<div class="options">
@@ -67,8 +72,8 @@
 							<p>Image type:</p>
 
 							<select name="type" id="image_type_selector">
-								<option value="png">PNG</option>
 								<option value="svg">SVG</option>
+								<option value="png">PNG</option>
 							</select>
 						</div>
 						<div>
@@ -107,17 +112,14 @@
 			</p>
 
 			<p class="code">
-				URL: {{ protocol }}://{{ hostname }}/rest/generate_link?[type=png][scale=1.0]
+				URL: {{ protocol }}://{{ hostname }}/rest/generate_link?[type=png][scale=1.0][c=...]
 			</p>
 
 			<p>
-				The link generator receives text as input in the post body and compresses the received text using lzma compression. 
-				The maximum text length that can be submitted is 32768 bytes (truncated if necessary). The result will
-				be a link returned as text with the embedded base64-encoded compressed text appended to the URL as "c"-parameter.
-			</p>
-
-			<p>
-				In order to obtain the rendered graphic just use the link returned by the call to generate_link.
+				The link generator receives text as input in the post body or optionally in the <span class=code>c</span> POST-argument (one of the two,
+				not both). The maximum text length that can be submitted is 32768 bytes. Any text longer than this will be
+				truncated after 32768 bytes. The result will be the link (text/plain) that will show the wavedrom image. If
+				the wavedrom code contains an error, the result will be the image of an error message.
 			</p>
 
 			<h3>

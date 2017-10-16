@@ -3,6 +3,7 @@ FROM base/archlinux:latest
 RUN pacman -Sy
 RUN pacman -S --noconfirm phantomjs ttf-freefont ttf-dejavu
 
+# Requirements for the server
 RUN pacman -S --noconfirm python python-pip
 RUN pip install jinja2 falcon pillow gunicorn
 
