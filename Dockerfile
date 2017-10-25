@@ -17,7 +17,9 @@ RUN useradd -m user
 
 EXPOSE 8000
 
+ENV WORKER_COUNT=4
+
 USER user
 WORKDIR /wavedrom/python/render_server
-ENTRYPOINT gunicorn main:fapi -w4 -b 0.0.0.0:8000
+ENTRYPOINT gunicorn main:fapi -w${WORKER_COUNT} -b 0.0.0.0:8000
 

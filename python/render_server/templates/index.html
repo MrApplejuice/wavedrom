@@ -112,11 +112,11 @@
 			</p>
 
 			<p class="code">
-				URL: {{ protocol }}://{{ hostname }}/rest/generate_link?[type=png][scale=1.0][c=...]
+				URL: {{ protocol }}://{{ hostname }}/rest/generate_link?[type=png][scale=1.0][code=...]
 			</p>
 
 			<p>
-				The link generator receives text as input in the post body or optionally in the <span class=code>c</span> POST-argument (one of the two,
+				The link generator receives text as input in the post body or optionally in the <span class=code>code</span> POST-argument (one of the two,
 				not both). The maximum text length that can be submitted is 32768 bytes. Any text longer than this will be
 				truncated after 32768 bytes. The result will be the link (text/plain) that will show the wavedrom image. If
 				the wavedrom code contains an error, the result will be the image of an error message.
